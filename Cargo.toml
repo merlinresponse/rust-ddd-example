@@ -15,3 +15,9 @@ uuid = { version = "1", features = ["v4"] }                     # task identitie
 [dev-dependencies]
 http-body-util = "0.1"                                          # read response bodies in E2E tests
 tower = { version = "0.5", features = ["util"] }                # `oneshot` a request through the router
+
+# Smaller dev builds: keep only line tables (file:line in panics and backtraces) instead of
+# full debug info. Roughly halves target/ size and speeds up linking.
+# Switch back to `debug = true` temporarily if you need a step-through debugger.
+[profile.dev]
+debug = "line-tables-only"
