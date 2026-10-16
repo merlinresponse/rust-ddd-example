@@ -1,0 +1,47 @@
+### Health
+GET http://localhost:3000/api/health
+
+### Create a task (copy the returned id into @id)
+POST http://localhost:3000/api/tasks
+Content-Type: application/json
+
+{ "description": "Buy milk" }
+
+###
+@id = paste-the-id-here
+
+### Reword
+PUT http://localhost:3000/api/tasks/{{id}}/description
+Content-Type: application/json
+
+{ "description": "Buy oat milk" }
+
+### Add a checklist item (copy the returned id into @item)
+POST http://localhost:3000/api/tasks/{{id}}/checklist
+Content-Type: application/json
+
+{ "title": "Buy eggs" }
+
+###
+@item = paste-the-item-id-here
+
+### Complete while the item is open → 409
+POST http://localhost:3000/api/tasks/{{id}}/complete
+
+### Tick the item off
+POST http://localhost:3000/api/tasks/{{id}}/checklist/{{item}}/check
+
+### Start
+POST http://localhost:3000/api/tasks/{{id}}/start
+
+### Complete
+POST http://localhost:3000/api/tasks/{{id}}/complete
+
+### Complete again → 409 Problem Details
+POST http://localhost:3000/api/tasks/{{id}}/complete
+
+### Get one
+GET http://localhost:3000/api/tasks/{{id}}
+
+### List
+GET http://localhost:3000/api/tasks

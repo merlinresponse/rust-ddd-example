@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  title: Task Manager API
+  version: 0.1.0
+  description: Layered DDD example. Errors use RFC 9457 Problem Details.
+paths:
+  /api/health:
+    get:
+      summary: Liveness check (never touches storage)
+      responses:
+        "200": { description: Process is up, content: { application/json: { schema: { type: object, properties: { status: { type: string, const: ok } } } } } }
+  /api/tasks:
+    post:
+      summary: Create a task (CreateTask)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/DescriptionRequest" } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { type: object, required: [id], properties: { id: { type: string, format: uuid } } } } } }
+        "400": { $ref: "#/components/responses/Problem" }
+    get:
+      summary: List all tasks (ListTasks)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Task" } } } } }
+  /api/tasks/{id}:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    get:
+      summary: Get one task (FindTaskById)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Task" } } } }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+  /api/tasks/{id}/description:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    put:
+      summary: Reword a task (ChangeTaskDescription)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/DescriptionRequest" } } }
+      responses:
+        "204": { description: Changed }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+  /api/tasks/{id}/checklist:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    post:
+      summary: Add a checklist item (AddChecklistItemInput)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [title], properties: { title: { type: string, minLength: 1, maxLength: 100 } } } } }
+      responses:
+        "201": { description: Added, content: { application/json: { schema: { type: object, required: [id], properties: { id: { type: string, format: uuid } } } } } }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+  /api/tasks/{id}/checklist/{item_id}/check:
+    parameters:
+      - { $ref: "#/components/parameters/Id" }
+      - { name: item_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      summary: Tick off a checklist item (CheckChecklistItemInput)
+      responses:
+        "204": { description: Checked }
+        "400": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+  /api/tasks/{id}/start:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    post:
+      summary: Start a task (StartTask)
+      responses:
+        "204": { description: Started }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+  /api/tasks/{id}/complete:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    post:
+      summary: Complete a task (CompleteTaskInput); 409 while checklist items are open
+      responses:
+        "204": { description: Completed }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+components:
+  parameters:
+    Id: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+  schemas:
+    DescriptionRequest:
+      type: object
+      required: [description]
+      properties: { description: { type: string, minLength: 1, maxLength: 255 } }
+    Task:
+      type: object
+      required: [id, description, status]
+      properties:
+        id: { type: string, format: uuid }
+        description: { type: string }
+        status: { type: string, enum: [todo, in_progress, done] }
+        checklist:
+          type: array
+          items:
+            type: object
+            required: [id, title, checked]
+            properties:
+              id: { type: string, format: uuid }
+              title: { type: string }
+              checked: { type: boolean }
+    ProblemDetails:
+      type: object
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+  responses:
+    Problem:
+      description: Error (RFC 9457)
+      content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }
