@@ -6,6 +6,8 @@ use crate::application::tasks::commands::{
 };
 use crate::application::tasks::queries::{FindTaskById, ListTasks};
 
+/// Hexagonal role: part of the HTTP DRIVING adapter: the driving ports (use cases) it may call.
+///
 /// The use cases every controller can reach. Built once in `main_modules`, cloned per request
 /// (cloning only copies the `Arc` pointers).
 #[derive(Clone)]

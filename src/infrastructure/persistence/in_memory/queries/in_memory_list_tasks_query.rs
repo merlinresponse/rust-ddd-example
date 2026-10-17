@@ -6,6 +6,8 @@ use crate::infrastructure::persistence::in_memory::repositories::mappers::to_vie
 use crate::infrastructure::persistence::in_memory::shared::InMemoryStore;
 
 /// InMemoryListTasksQuery — adapter for the `ListTasksQuery` port; reads rows directly.
+/// Hexagonal role: DRIVEN adapter (secondary adapter): implements the driven port `ListTasksQuery`.
+///   The application calls it; swap it (e.g. for Postgres) without touching domain or application.
 pub struct InMemoryListTasksQuery {
     store: Arc<InMemoryStore>,
 }

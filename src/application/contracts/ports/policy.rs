@@ -3,6 +3,8 @@ use crate::domain::shared::{DomainEvent, Result};
 /// Policy — "WHEN this event happened, THEN do that".
 ///
 /// DDD role: Policy (a reaction to a domain event that lives outside the aggregate that raised it).
+/// Hexagonal role: DRIVING port (primary port): implemented on the inside (every policy);
+///   called by a driving adapter, `PolicyDomainEventListener`, after an event was committed.
 /// Business meaning: a business reaction such as "when a task is completed, congratulate the
 ///   user" or "when a task is reworded, write an audit line".
 /// Rules:

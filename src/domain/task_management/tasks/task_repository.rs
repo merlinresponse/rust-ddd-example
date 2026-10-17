@@ -5,6 +5,9 @@ use crate::domain::shared::Result;
 ///
 /// DDD role: Repository port. A *repository* gives the illusion of an in-memory collection of
 ///   aggregates; a *port* is an interface the domain owns and infrastructure implements.
+/// Hexagonal role: DRIVEN port (secondary port): something the application NEEDS from the
+///   outside world. Defined on the inside, implemented by a driven adapter outside:
+///   `InMemoryTaskRepository` (and a hand-written double in tests/common).
 /// Business meaning: "find the task with this ID" and "keep this task".
 /// Rules: one repository per aggregate root. A repository never commits a transaction and never
 ///   publishes events — the Unit of Work does both.

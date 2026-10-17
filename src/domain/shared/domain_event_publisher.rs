@@ -3,6 +3,9 @@ use super::DomainEvent;
 /// DomainEventPublisher — port for "tell the rest of the world that this happened".
 ///
 /// DDD role: Port (an interface the domain defines and infrastructure implements).
+/// Hexagonal role: DRIVEN port (secondary port): something the application NEEDS from the
+///   outside world. Defined on the inside, implemented by a driven adapter outside:
+///   `PolicyDomainEventListener` (and a hand-written double in tests/common).
 /// Business meaning: delivers events to whoever listens: a log, a message bus, a policy.
 /// Why modelled this way: the Unit of Work calls it only AFTER data was saved, so nobody hears
 ///   about a change that was rolled back.

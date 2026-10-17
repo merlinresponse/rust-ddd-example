@@ -10,6 +10,8 @@ use crate::infrastructure::shared::lock;
 /// InMemoryUnitOfWork — Unit of Work adapter for the in-memory store.
 ///
 /// DDD role: Adapter (the concrete implementation of the `UnitOfWork` port).
+/// Hexagonal role: DRIVEN adapter (secondary adapter): implements the driven port `UnitOfWork`.
+///   The application calls it; swap it (e.g. for Postgres) without touching domain or application.
 /// Guarantees (the same contract a Postgres-backed Unit of Work would keep):
 /// 1. begin = take the transaction lock + snapshot; on error = restore the snapshot (rollback);
 /// 2. events are pulled and published ONLY after a successful commit, after the lock is released;

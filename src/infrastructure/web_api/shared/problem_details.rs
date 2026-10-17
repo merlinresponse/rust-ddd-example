@@ -4,6 +4,9 @@ use serde_json::json;
 
 use crate::domain::shared::{DomainError, Error};
 
+/// Hexagonal role: part of the HTTP DRIVING adapter: translates errors coming back out of the
+///   driving port into HTTP responses.
+///
 /// ApiError — turns any use-case error into an RFC 9457 "Problem Details" JSON response.
 ///
 /// Why modelled this way: the ONE place that maps business errors to HTTP status codes, by

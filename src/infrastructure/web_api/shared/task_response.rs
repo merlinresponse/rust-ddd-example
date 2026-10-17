@@ -2,6 +2,8 @@ use serde::Serialize;
 
 use crate::application::contracts::ports::queries::{ChecklistItemView, TaskView};
 
+/// Hexagonal role: part of the HTTP DRIVING adapter (a DTO); not a port.
+///
 /// JSON shape of a task in HTTP responses (a DTO: Data Transfer Object).
 #[derive(Debug, Serialize)]
 pub struct TaskResponse {

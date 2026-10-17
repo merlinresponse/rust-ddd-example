@@ -5,6 +5,9 @@ use crate::application::contracts::ports::UseCase;
 use crate::application::tasks::commands::CheckChecklistItemInput;
 use crate::infrastructure::web_api::shared::{ApiError, AppState};
 
+/// Hexagonal role: DRIVING adapter (primary adapter): turns an HTTP request into a call on
+///   the driving port `UseCase` (here: `CheckChecklistItem`).
+///
 /// POST /api/tasks/{id}/checklist/{item_id}/check → 204 No Content
 pub async fn check_checklist_item_controller(
     State(state): State<AppState>,

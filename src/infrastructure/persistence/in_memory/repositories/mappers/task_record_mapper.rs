@@ -8,6 +8,7 @@ use crate::domain::task_management::tasks::{ChecklistItem, ChecklistItemId, Task
 /// TaskRecord — one row of the "tasks" table: plain strings, exactly what a database stores.
 /// The checklist is stored WITH its task (in SQL: a `checklist_items` table with a `task_id`
 /// column, always read and written together with the task row).
+/// Hexagonal role: part of the DRIVEN persistence adapter (translates rows ⇄ aggregates); not a port.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TaskRecord {
     pub id: String,

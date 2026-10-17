@@ -8,6 +8,8 @@ use crate::infrastructure::persistence::in_memory::shared::InMemoryStore;
 /// InMemoryTaskRepository — stores tasks in the in-memory table.
 ///
 /// DDD role: Adapter for the `TaskRepository` port.
+/// Hexagonal role: DRIVEN adapter (secondary adapter): implements the driven port `TaskRepository`.
+///   The application calls it; swap it (e.g. for Postgres) without touching domain or application.
 /// Rules: no commit, no event publishing — the Unit of Work does that.
 pub struct InMemoryTaskRepository {
     store: Arc<InMemoryStore>,

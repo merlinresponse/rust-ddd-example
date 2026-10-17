@@ -27,6 +27,103 @@ You can check this yourself: `grep -rn "infrastructure\|axum" src/domain` finds 
 switched web framework or database. They can be tested without either.
 **Pattern:** Layered Architecture (Evans Ch. 4), Clean / Hexagonal Architecture.
 
+## 1b. Ports and adapters: DRIVING vs DRIVEN
+
+The layers above can also be drawn as a hexagon: the **application core** (domain +
+application) sits in the middle, and the outside world talks to it only through **ports**,
+which are traits. **Adapters** are the technical code that plugs into those ports. The key
+question for every port is: *who starts the conversation?*
+
+```
+       DRIVING side (left)                              DRIVEN side (right)
+  "the world uses the app"                          "the app uses the world"
+
+  ┌───────────────────────┐                        ┌──────────────────────────┐
+  │ DRIVING ADAPTERS      │                        │ DRIVEN ADAPTERS          │
+  │ HTTP controllers      │                        │ InMemoryTaskRepository   │
+  │ tests (E2E, unit)     │                        │ InMemoryUnitOfWork       │
+  │ PolicyDomainEvent-    │                        │ InMemory…Query           │
+  │   Listener (policies) │                        │ PolicyDomainEvent-       │
+  └──────────┬────────────┘                        │   Listener (publishing)  │
+             │ calls                               │ ConsoleLogger            │
+             ▼                                     └────────────▲─────────────┘
+  ╔═══════════════════════╗                                     │ implements
+  ║ DRIVING PORTS         ║   ┌─────────────────────┐   ╔═══════╧══════════════╗
+  ║ UseCase<I, O>         ║──▶│  APPLICATION CORE   │──▶║ DRIVEN PORTS         ║
+  ║ Policy                ║   │  use cases, Task,   │   ║ TaskRepository       ║
+  ╚═══════════════════════╝   │  rules, events      │   ║ UnitOfWork           ║
+   implemented by the core    └─────────────────────┘   ║ FindTaskByIdQuery    ║
+                                                        ║ ListTasksQuery       ║
+                                                        ║ DomainEventPublisher ║
+                                                        ║ Logger               ║
+                                                        ╚══════════════════════╝
+                                                         defined by the core,
+                                                         implemented outside
+```
+
+### Driving ports (primary): the world → the app
+**What:** the entry points of the application, i.e. "what can you ask this app to do?" The
+**core implements** them, and something outside **calls** them.
+
+| Port | Where | Implemented by (core) | Called by (driving adapter) |
+|---|---|---|---|
+| `UseCase<I, O>` | `application/contracts/ports/use_case.rs` | every command and query in `application/tasks/` | HTTP controllers; tests |
+| `Policy` | `application/contracts/ports/policy.rs` | the policies in `application/tasks/policies/` | `PolicyDomainEventListener` |
+
+### Driven ports (secondary): the app → the world
+**What:** what the application **needs** from outside, i.e. "store this", "find that",
+"tell others", "write a log line". The **core defines** them and **calls** them, and an
+adapter outside **implements** them.
+
+| Port | Where | Implemented by (driven adapter) | Test double |
+|---|---|---|---|
+| `TaskRepository` | `domain/task_management/tasks/task_repository.rs` | `InMemoryTaskRepository` | `MockTaskRepository` |
+| `DomainEventPublisher` | `domain/shared/domain_event_publisher.rs` | `PolicyDomainEventListener` | `RecordingPublisher` |
+| `UnitOfWork` | `application/contracts/ports/unit_of_work.rs` | `InMemoryUnitOfWork` | `MockUnitOfWork` |
+| `FindTaskByIdQuery` | `application/contracts/ports/queries/` | `InMemoryFindTaskByIdQuery` | — |
+| `ListTasksQuery` | `application/contracts/ports/queries/` | `InMemoryListTasksQuery` | — |
+| `Logger` | `application/contracts/ports/logger.rs` | `ConsoleLogger` | `RecordingLogger` |
+
+**Why some driven ports live in `domain/` and others in `application/`:** a port lives with
+the code that *needs* it. The domain itself talks about "a repository of tasks" and "publishing
+an event", so those two are domain ports. Transactions, logging and read queries are
+application concerns.
+
+### Adapters: the technical code at the edges
+| Adapter | Side | Plugs into |
+|---|---|---|
+| `web_api/controllers/*_controller.rs`, plus routes, `ApiError` and DTOs | **driving** | calls `UseCase` |
+| `web_api/middlewares/health_check.rs` | driving | calls *no* port on purpose: it only says "this process is up" |
+| `persistence/in_memory/repositories/in_memory_task_repository.rs` (+ mapper, store) | **driven** | implements `TaskRepository` |
+| `persistence/in_memory/shared/in_memory_unit_of_work.rs` | driven | implements `UnitOfWork` |
+| `persistence/in_memory/queries/*` | driven | implements the query ports |
+| `shared/console_logger.rs` | driven | implements `Logger` |
+| `events/domain_events/policy_domain_event_listener.rs` | **both** | implements `DomainEventPublisher` (driven) **and** calls `Policy` (driving) |
+
+**The listener is the interesting one.** Seen from the Unit of Work, it is a *driven* adapter:
+the application calls `publish`. Seen from the policies, it is a *driving* adapter: it calls
+`policy.handle`, just like a controller calls a use case. Direction is about **who calls
+whom**, not about which folder a file sits in.
+
+**How to tell them apart in one sentence:** if the *outside* calls a trait and the *app*
+implements it, it's a **driving** port. If the *app* calls a trait and the *outside*
+implements it, it's a **driven** port.
+
+**Why it matters:**
+- **Tests:** swap driven adapters for test doubles (`tests/common`) to test use cases without
+  storage, and drive the app through its driving ports without HTTP.
+- **Technology changes:** a Postgres repository is just another driven adapter for
+  `TaskRepository`. A CLI or a message-queue consumer is just another driving adapter
+  calling the same `UseCase`s.
+- **The core never names an adapter:** only `main_modules` (the composition root) knows which
+  adapter goes into which port.
+
+Every port and adapter in the code says which it is in a `Hexagonal role:` doc line
+(`grep -rn "Hexagonal role" src`).
+
+**Pattern:** Ports and Adapters / Hexagonal Architecture (Alistair Cockburn, 2005; beyond
+Evans).
+
 ## 2. Value Object — `TaskDescription`, `TaskStatus`, `TaskId`
 **What:** a small immutable type defined by its value. `TaskDescription` has a private field and
 a single way in, `create()`, which validates the input.
@@ -135,6 +232,12 @@ ROLLBACK → publish events.
 **Why:** transactions and event publishing are easy to get subtly wrong. Doing them once,
 centrally, means no use case can forget them.
 **Rule:** one aggregate changed per Unit of Work.
+**The guarantee, in two sentences:** all changes of a command are saved together or not at
+all; and an event is published only *after* its change was committed, never for a change that
+was rolled back. The step-by-step walkthrough (BEGIN → rules → save → COMMIT/ROLLBACK →
+PUBLISH/DROP), the three outcomes side by side, and the one remaining gap (a crash right after
+commit, solved by a transactional outbox) are in `docs/CODE_FLOW.md`, section "All or
+nothing".
 **Rust note:** `run(&self, action: &mut dyn FnMut(&dyn UnitOfWork) -> Result<()>)` uses trait
 objects (`dyn`) instead of generics, so it can be shared as `Arc<dyn UnitOfWork>`.
 **Pattern:** Unit of Work (Fowler, PoEAA).

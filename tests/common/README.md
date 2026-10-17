@@ -2,6 +2,10 @@
 
 Hand-written mocks, so you can read exactly what they do. No mocking library.
 
+In hexagonal terms these are **driven adapters for tests**: each implements a driven port,
+so the use cases can run without real storage or a console. The tests themselves act as
+**driving adapters**: they call the use cases through the `UseCase` driving port.
+
 | Double | Replaces | Tracking fields | Use it to… |
 |---|---|---|---|
 | `MockTaskRepository` | `TaskRepository` | `stored` | hold tasks for a use-case test |

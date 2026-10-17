@@ -9,6 +9,8 @@ use super::controllers::{
 use super::middlewares::health_check;
 use super::shared::AppState;
 
+/// Hexagonal role: part of the HTTP DRIVING adapter: maps each URL to its controller.
+///
 /// All HTTP routes. See `config/openapi.yml` for the contract.
 ///
 /// FLOW 1 — WHAT: axum matches the method + path of a request against this table and calls

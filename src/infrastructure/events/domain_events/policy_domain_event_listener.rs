@@ -10,6 +10,10 @@ use crate::infrastructure::shared::lock;
 /// PolicyDomainEventListener — receives every committed event and runs the policies for it.
 ///
 /// DDD role: Adapter for the `DomainEventPublisher` port (an in-process event bus).
+/// Hexagonal role: BOTH sides at once, a good example of why the direction matters:
+///   - DRIVEN adapter for the `DomainEventPublisher` port: the Unit of Work calls it to publish;
+///   - DRIVING adapter for the `Policy` port: it calls into the application to run policies.
+///
 /// What it does for each event:
 /// 1. logs the event;
 /// 2. looks up its FQDN in the policy registry;

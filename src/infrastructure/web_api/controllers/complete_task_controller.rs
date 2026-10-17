@@ -5,6 +5,9 @@ use crate::application::contracts::ports::UseCase;
 use crate::application::tasks::commands::CompleteTaskInput;
 use crate::infrastructure::web_api::shared::{ApiError, AppState};
 
+/// Hexagonal role: DRIVING adapter (primary adapter): turns an HTTP request into a call on
+///   the driving port `UseCase` (here: `CompleteTask`).
+///
 /// POST /api/tasks/{id}/complete → 204 No Content
 pub async fn complete_task_controller(
     State(state): State<AppState>,

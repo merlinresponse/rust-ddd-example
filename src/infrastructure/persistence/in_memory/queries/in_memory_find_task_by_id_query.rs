@@ -7,6 +7,8 @@ use crate::infrastructure::persistence::in_memory::repositories::mappers::to_vie
 use crate::infrastructure::persistence::in_memory::shared::InMemoryStore;
 
 /// InMemoryFindTaskByIdQuery — adapter for the `FindTaskByIdQuery` port; reads rows directly.
+/// Hexagonal role: DRIVEN adapter (secondary adapter): implements the driven port `FindTaskByIdQuery`.
+///   The application calls it; swap it (e.g. for Postgres) without touching domain or application.
 pub struct InMemoryFindTaskByIdQuery {
     store: Arc<InMemoryStore>,
 }

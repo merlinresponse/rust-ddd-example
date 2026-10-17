@@ -12,6 +12,9 @@ pub struct ChangeTaskDescriptionRequest {
     pub description: String,
 }
 
+/// Hexagonal role: DRIVING adapter (primary adapter): turns an HTTP request into a call on
+///   the driving port `UseCase` (here: `ChangeTaskDescription`).
+///
 /// PUT /api/tasks/{id}/description → 204 No Content
 pub async fn change_task_description_controller(
     State(state): State<AppState>,

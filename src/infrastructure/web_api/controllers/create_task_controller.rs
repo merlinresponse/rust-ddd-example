@@ -17,6 +17,9 @@ pub struct CreateTaskResponse {
     pub id: String,
 }
 
+/// Hexagonal role: DRIVING adapter (primary adapter): turns an HTTP request into a call on
+///   the driving port `UseCase` (here: `CreateTask`).
+///
 /// POST /api/tasks → 201 `{ "id": "…" }`
 ///
 /// The use cases are synchronous (the in-memory store answers instantly). With a real database

@@ -50,19 +50,29 @@ More requests are in `tasks.http`, and the full API contract is in `config/opena
 ## Architecture
 
 ```
-HTTP ─▶ infrastructure/web_api  (controllers: HTTP ⇄ Rust)
+HTTP ─▶ infrastructure/web_api          DRIVING ADAPTERS (controllers: HTTP ⇄ Rust)
+            │ calls
+            ▼
+        UseCase, Policy                  DRIVING PORTS (implemented by the core)
             │
             ▼
-        application/tasks       (use cases: parse → load → domain call → save)
-            │       ▲ ports: UnitOfWork, queries, Policy, Logger
-            ▼       │
-        domain/task_management  (Task, value objects, events, TaskRepository port)
-            ▲
-            │ implements ports
-        infrastructure/persistence/in_memory   infrastructure/events
-            ▲
-        main_modules            (composition root: wires it all together)
+        application/tasks               application core: use cases, policies
+        domain/task_management          application core: Task, rules, events
+            │ calls
+            ▼
+        TaskRepository, UnitOfWork,      DRIVEN PORTS (defined by the core)
+        queries, DomainEventPublisher,
+        Logger
+            ▲ implements
+            │
+        infrastructure/persistence,      DRIVEN ADAPTERS (in-memory store, listener,
+        events, shared                   console logger)
+
+        main_modules                     composition root: puts each adapter in its port
 ```
+
+**Driving vs driven:** the outside *calls* a driving port; the core *calls* a driven port.
+Full explanation and tables: `docs/CONCEPTS.md`, section 1b.
 
 **The dependency rule:** imports only point inward. `domain` depends on nothing in the project.
 `application` depends on `domain` only.

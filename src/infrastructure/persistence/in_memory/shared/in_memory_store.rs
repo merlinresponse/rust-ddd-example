@@ -8,6 +8,7 @@ use crate::infrastructure::shared::lock;
 ///
 /// Why modelled this way: rows are stored as `TaskRecord` (plain strings, like a DB row), not as
 /// `Task` aggregates, so the mapper is exercised exactly as it would be with a real database.
+/// Hexagonal role: part of the in-memory DRIVEN adapters (their "database"); not a port.
 #[derive(Debug, Default)]
 pub struct InMemoryStore {
     transaction: Mutex<()>,

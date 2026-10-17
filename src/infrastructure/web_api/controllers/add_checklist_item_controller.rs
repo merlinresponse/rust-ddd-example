@@ -17,6 +17,9 @@ pub struct AddChecklistItemResponse {
     pub id: String,
 }
 
+/// Hexagonal role: DRIVING adapter (primary adapter): turns an HTTP request into a call on
+///   the driving port `UseCase` (here: `AddChecklistItem`).
+///
 /// POST /api/tasks/{id}/checklist → 201 `{ "id": "<checklist item id>" }`
 pub async fn add_checklist_item_controller(
     State(state): State<AppState>,
